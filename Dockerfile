@@ -10,8 +10,7 @@ RUN go build -o /bin/app ./cmd/app
 RUN go build -o /bin/migrate ./cmd/migrate
 
 FROM alpine:3.20
-
+WORKDIR /app
 COPY --from=builder /bin/app /bin/app
 COPY --from=builder /bin/migrate /bin/migrate
-
-ENTRYPOINT ["/bin/app"]
+COPY --from=builder /app/configs /app/configs

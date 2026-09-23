@@ -3,7 +3,7 @@
 # === Базовые переменные ===
 APP_BIN := bin/app
 MIGRATE_BIN := bin/migrate
-DOCKER_COMPOSE := docker-compose.yml
+DOCKER_ENV := .env.docker
 
 
 # === СПРАВКА ===
@@ -46,10 +46,10 @@ dev: migrate-up
 
 # === DOCKER КОМАНДЫ ===
 docker-up:
-	docker compose -f $(DOCKER_COMPOSE) up --build
+	docker compose --env-file $(DOCKER_ENV) up --build
 
 docker-down:
-	docker compose -f $(DOCKER_COMPOSE) down
+	docker compose down
 
 
 # === ОЧИСТКА (удаление бинарников) ===

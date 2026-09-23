@@ -58,7 +58,7 @@ func applyEnvOverrides(cfg *Config) {
 	setIfEnv(&cfg.DB.Password, "DB_PASSWORD")
 	setIfEnv(&cfg.DB.SSLMode, "DB_SSLMODE")
 	setIfEnv(&cfg.Server.Host, "SERVER_HOST")
-	setIfEnv(&cfg.Server.Host, "SERVER_PORT")
+	setIfEnv(&cfg.Server.Port, "SERVER_PORT")
 }
 
 func setIfEnv(p *string, key string) {
