@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"embed"
+	"errors"
 	"flag"
 	"log"
 
@@ -18,7 +19,7 @@ func main() {
 	ctx := context.Background()
 
 	var (
-		dir   = flag.String("dir", "db/migrations", "директория миграций")
+		dir   = flag.String("dir", "migrations", "директория миграций")
 		cmd   = flag.String("cmd", "up", "команда: up, down, status, redo, reset")
 		steps = flag.Int("steps", 1, "сколько миграций откатить (для down)")
 	)
@@ -47,15 +48,14 @@ func main() {
 		if *steps <= 1 {
 			err = goose.Down(db, *dir)
 		} else {
-			version, e := goose.GetDBVersion(db)
-			if e != nil {
-				log.Fatalf("get version: %v", e)
+			for i := 0; i < *steps; i++ {
+				if err = goose.Down(db, *dir); err != nil {
+					if errors.Is(err, goose.ErrNoCurrentVersion) {
+						err = nil // достигли нуля
+					}
+					break
+				}
 			}
-			target := version - int64(*steps)
-			if target < 0 {
-				target = 0
-			}
-			err = goose.DownTo(db, *dir, target)
 		}
 	case "status":
 		err = goose.Status(db, *dir)

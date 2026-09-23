@@ -5,6 +5,8 @@ import (
 	"os"
 	"time"
 
+	"github.com/joho/godotenv"
+
 	yaml "go.yaml.in/yaml/v3"
 )
 
@@ -31,6 +33,7 @@ type DBConfig struct {
 }
 
 func Load(path string) (*Config, error) {
+	_ = godotenv.Load(".env")
 	var cfg Config
 
 	data, err := os.ReadFile(path)

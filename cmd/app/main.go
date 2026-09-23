@@ -11,20 +11,14 @@ import (
 	"time"
 
 	"github.com/coddemn/get-access/internal/config"
-	"github.com/coddemn/get-access/internal/database"
 	"github.com/gin-gonic/gin"
-	"github.com/joho/godotenv"
 )
 
 func main() {
 
-	//===============================================
+	//================================
 	//	LOAD CONFIGS
-	//===============================================
-
-	_ = godotenv.Load(".env")
-
-	ctx := context.Background()
+	//================================
 
 	cfg, err := config.Load("configs/config.yaml")
 	if err != nil {
@@ -35,16 +29,17 @@ func main() {
 	//	CONNECT TO DB
 	//======================
 
-	database, err := database.New(ctx, cfg.DB)
-	if err != nil {
-		log.Fatalf("init db: %v", err)
-	}
-	defer func() {
-		database.Close()
-		log.Println("db connection is closed")
-	}()
+	//ctx := context.Background()
+	// db, err := database.New(ctx, cfg.DB)
+	// if err != nil {
+	// 	log.Fatalf("open db: %v", err)
+	// }
+	// defer func() {
+	// 	db.Close()
+	// 	log.Println("db connection is closed")
+	// }()
 
-	log.Println("connected to database")
+	// log.Println("connected to database")
 
 	//=======================
 	//	INITIALYZE
