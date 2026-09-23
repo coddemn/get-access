@@ -11,10 +11,7 @@ import (
 )
 
 func New(ctx context.Context, cfg config.DBConfig) (*sql.DB, error) {
-	connStr := fmt.Sprintf(
-		"postgres://%s:%s@%s:%s/%s?sslmode=%s",
-		cfg.User, cfg.Password, cfg.Host, cfg.Port, cfg.Name, cfg.SSLMode,
-	)
+	connStr := cfg.DSN()
 
 	poolConfig, err := pgxpool.ParseConfig(connStr)
 	if err != nil {

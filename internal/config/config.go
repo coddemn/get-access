@@ -1,6 +1,7 @@
 package config
 
 import (
+	"fmt"
 	"os"
 	"time"
 
@@ -13,57 +14,62 @@ type Config struct {
 }
 
 type ServerConfig struct {
-	Host string `yaml:"host"`
-	Port string `yaml:"port"`
+	Host string `yaml:"host" env:"SERVER_HOST"`
+	Port string `yaml:"port" env:"SERVER_PORT"`
 }
 
 type DBConfig struct {
-	Host            string        `yaml:"host"`
-	Port            string        `yaml:"port"`
-	User            string        `yaml:"user"`
-	Password        string        `yaml:"password"`
-	Name            string        `yaml:"name"`
-	SSLMode         string        `yaml:"sslmode"`
-	MaxOpenConns    int           `yaml:"max_open_conns"`
-	MaxIdleConns    int           `yaml:"max_idle_conns"`
-	ConnMaxLifetime time.Duration `yaml:"conn_max_lifetime"`
+	Host            string        `yaml:"host" env:"DB_HOST"`
+	Port            string        `yaml:"port" env:"DB_PORT"`
+	User            string        `yaml:"user" env:"DB_USER"`
+	Password        string        `yaml:"password" env:"DB_PASSWORD"`
+	Name            string        `yaml:"name" env:"DB_NAME"`
+	SSLMode         string        `yaml:"sslmode" env:"DB_SSLMODE"`
+	MaxOpenConns    int           `yaml:"max_open_conns" env:"DB_MAX_OPEN_CONNS"`
+	MaxIdleConns    int           `yaml:"max_idle_conns" env:"DB_MAX_IDLE_CONNS"`
+	ConnMaxLifetime time.Duration `yaml:"conn_max_lifetime" env:"DB_CONN_MAX_LIFETIME"`
 }
 
 func Load(path string) (*Config, error) {
+	var cfg Config
 
 	data, err := os.ReadFile(path)
 	if err != nil {
 		return nil, err
 	}
 
-	var cfg Config
 	if err := yaml.Unmarshal(data, &cfg); err != nil {
 		return nil, err
 	}
 
-	if v := os.Getenv("DB_HOST"); v != "" {
-		cfg.DB.Host = v
-	}
-
-	if v := os.Getenv("DB_PORT"); v != "" {
-		cfg.DB.Port = v
-	}
-
-	if v := os.Getenv("DB_USER"); v != "" {
-		cfg.DB.User = v
-	}
-
-	if v := os.Getenv("DB_NAME"); v != "" {
-		cfg.DB.Name = v
-	}
-
-	if v := os.Getenv("DB_PASSWORD"); v != "" {
-		cfg.DB.Password = v
-	}
-
-	if v := os.Getenv("DB_SSLMODE"); v != "" {
-		cfg.DB.SSLMode = v
-	}
+	applyEnvOverrides(&cfg)
 
 	return &cfg, nil
 }
+
+func applyEnvOverrides(cfg *Config) {
+	setIfEnv(&cfg.DB.Host, "DB_HOST")
+	setIfEnv(&cfg.DB.Port, "DB_PORT")
+	setIfEnv(&cfg.DB.User, "DB_USER")
+	setIfEnv(&cfg.DB.Name, "DB_NAME")
+	setIfEnv(&cfg.DB.Password, "DB_PASSWORD")
+	setIfEnv(&cfg.DB.SSLMode, "DB_SSLMODE")
+	setIfEnv(&cfg.Server.Host, "SERVER_HOST")
+	setIfEnv(&cfg.Server.Host, "SERVER_PORT")
+}
+
+func setIfEnv(p *string, key string) {
+	if v := os.Getenv(key); v != "" {
+		*p = v
+	}
+}
+
+func (c DBConfig) DSN() string {
+	return fmt.Sprintf(
+		"host=%s port=%s user=%s password=%s dbname=%s sslmode=%s",
+		c.Host, c.Port, c.User, c.Password, c.Name, c.SSLMode,
+	)
+}
+
+// url: "postgres://%s:%s@%s:%s/%s?sslmode=%s",
+// 			c.User, c.Password, c.Host, c.Port, c.Name, c.SSLMode,
