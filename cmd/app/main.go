@@ -10,7 +10,10 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/coddemn/get-access/internal/api/handler"
 	"github.com/coddemn/get-access/internal/config"
+	"github.com/coddemn/get-access/internal/database"
+	"github.com/coddemn/get-access/internal/repository"
 	"github.com/gin-gonic/gin"
 )
 
@@ -29,31 +32,32 @@ func main() {
 	//	CONNECT TO DB
 	//======================
 
-	//ctx := context.Background()
-	// db, err := database.New(ctx, cfg.DB)
-	// if err != nil {
-	// 	log.Fatalf("open db: %v", err)
-	// }
-	// defer func() {
-	// 	db.Close()
-	// 	log.Println("db connection is closed")
-	// }()
+	ctx := context.Background()
+	db, err := database.New(ctx, cfg.DB)
+	if err != nil {
+		log.Fatalf("open db: %v", err)
+	}
+	defer func() {
+		db.Close()
+		log.Println("db connection is closed")
+	}()
 
-	// log.Println("connected to database")
+	log.Println("connected to database")
 
 	//=======================
 	//	INITIALYZE
 	//=======================
 
+	userRepo := repository.NewUserRepo(db)
+	serviceRepo := repository.NewServiceRepo(db)
+
+	userHand := handler.NewUserHand(userRepo)
+	serviceHand := handler.NewServiceHand(serviceRepo)
+
 	httpAddr := fmt.Sprintf("%s:%s", cfg.Server.Host, cfg.Server.Port)
 
 	gin.SetMode(gin.ReleaseMode)
 	router := gin.Default()
-
-	httpServer := &http.Server{
-		Addr:    httpAddr,
-		Handler: router,
-	}
 
 	//==============================
 	//	ENDPOINTS
@@ -65,9 +69,25 @@ func main() {
 		})
 	})
 
+	api := router.Group("/api")
+	{
+
+		api.POST("/registration", userHand.Registrate)
+		api.POST("/auth", userHand.Auth)
+
+		api.GET("/services/:user_id", serviceHand.AllServices)
+		api.POST("/services/new", serviceHand.NewService)
+
+	}
+
 	//===============================
 	//	START SERVER
 	//===============================
+
+	httpServer := &http.Server{
+		Addr:    httpAddr,
+		Handler: router,
+	}
 
 	go func() {
 		log.Printf("HTTP Server is running on %s", httpAddr)
